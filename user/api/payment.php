@@ -26,57 +26,81 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $SECRET_KEY
      :
       'WE WILL FETCH THE LIVE API HERE...';
-    
-    //validation...later
-//.($_POST['PAY_COND'] =='TEST' ? json_encode( $APIS->fetchTestAPIs(1)['PUBLIC_KEY']) : 'live_api..')
+    //aray of errors..
+    $errorArray  = array();
+
+    //validation...prototype: ['fieldname'=>"field error message"]
+    array_push($errorArray, ['name' => (empty($name)?'Name is required':"") ]);
+    array_push($errorArray, ['email' => (empty($email)?'Email is required':"") ]);
+    array_push($errorArray, ['amount' => (empty($amount)?'Amount is required':"") ]);
+    array_push($errorArray, ['currency' => (empty($name)?'Currency is required':"") ]);
+    array_push($errorArray, ['phoneNo' => (empty($phoneNo)?'Phone number is required':"") ]);
+    array_push($errorArray, ['paymentCond' => (empty($paymentCond)?'You have to select between TEST/LIVE':"") ]);
+
     //redirect url 
-    //SHOULD BE ADDED.... OR CHANGED TO THE one we want to use...
+  //the redirected url.... success page..
+
     $redirect_url = (isset($_SERVER['HTTPS']) ? 'https' : 'http')
     . '://'.$_SERVER['HTTP_HOST'].'payment.php';
-   
-    $request = [
-        'tx_ref' => time(),
-        'amount' => $amount,
-        'currency' => $currency,
-        'payment_option' => 'card',
-        'redirect_url' => $redirect_url,
-        //all the post data 
-        "customer" => $_POST,
-        //we might need this sha if we have db ready for the users...
-        "meta" => [],
-        "customization" => [
-            'description' => $description,
-            'time' => 'time is not a problem...'
-        ]
-        ];
-    $curl = curl_init();
-//
-    curl_setopt_array($curl, array(
-        //flutter wave endpoint
-        CURLOPT_URL => 'https://api.flutterwave.com/v3/payments',
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => '',
-        CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 0,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_CUSTOMREQUEST => 'POST',
-        CURLOPT_POSTFIELDS => json_encode($request),
-        //json_encode( $APIS->fetchTestAPIs(2)['PUBLIC_KEY'])
-        CURLOPT_HTTPHEADER => array(
-            //PAY_CON = TEST / LIVE
-            //default userid = 1... if session is created, use the session userid..
-            'Authorization: Bearer '.$userAuthDetails,
-            'Content-Type: application/json'
-        ),
-        ));
-      
-        $response = curl_exec($curl);
-        curl_close($curl);
-
-        
-
-
+    
+   //no error...
+    if (count($errorArray) === 0) {
+        $request = [
+            'tx_ref' => time(),
+            'amount' => $amount,
+            'currency' => $currency,
+            'payment_option' => 'card',
+            'redirect_url' => $redirect_url,
+            //all the post data 
+            "customer" => $_POST,
+            //we might need this sha if we have db ready for the users...
+            "meta" => [],
+            "customization" => [
+                'description' => $description,
+                'time' => 'time is not a problem...'
+            ]
+            ];
+            //this curl is like axios 
+        $curl = curl_init();
+    //
+        curl_setopt_array($curl, array(
+            //flutter wave endpoint
+            CURLOPT_URL => 'https://api.flutterwave.com/v3/payments',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => json_encode($request),
+            CURLOPT_HTTPHEADER => array(
+                //PAY_CON = TEST / LIVE
+                //default userid = 1... if session is created, use the session userid..
+                'Authorization: Bearer '.$userAuthDetails,
+                'Content-Type: application/json'
+            ),
+            ));
+          
+            $response = curl_exec($curl);
+            curl_close($curl);
+            //decode the json object to readable php
+            $res = json_decode($response);
+    
+            print_r($res);
+    
+            /*
+            if ($res['status'] == 'success') {
+                //proceed
+                $checkoutPage = $res['data']['link'];
+                header('location:'.$checkoutPage);
+            }else {
+                //call another gateway endpoint.... //paystack
+            }
+            */
+    }else{
+        echo json_encode($errorArray);
+    }
 
 }else {
     echo 'hello';

@@ -1,4 +1,10 @@
 <?php
 
-$connection = mysqli_connect('localhost','root','','api-controller') or die(msqli_error());
+echo 'This is the api front<br><br>';
+
+echo "got to http://localhost/payment/user/api?userId=1 
+
+http://localhost/payment/user/api/payment.php
+
+";
 

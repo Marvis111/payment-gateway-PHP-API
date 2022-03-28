@@ -9,6 +9,9 @@ include '../../api/index.php';
 
 $APIS = new APIcontroller();
 
+//error filter
+
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $name = $_POST['name'];
@@ -30,21 +33,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $errorArray  = array();
 
     //validation...prototype: ['fieldname'=>"field error message"]
-    array_push($errorArray, ['name' => (empty($name)?'Name is required':"") ]);
-    array_push($errorArray, ['email' => (empty($email)?'Email is required':"") ]);
-    array_push($errorArray, ['amount' => (empty($amount)?'Amount is required':"") ]);
-    array_push($errorArray, ['currency' => (empty($name)?'Currency is required':"") ]);
-    array_push($errorArray, ['phoneNo' => (empty($phoneNo)?'Phone number is required':"") ]);
-    array_push($errorArray, ['paymentCond' => (empty($paymentCond)?'You have to select between TEST/LIVE':"") ]);
+    array_push($errorArray, ['name' => "name","msg"=>(empty($name)?'Name is required':"") ]);
+    array_push($errorArray, ['name' => "email","msg"=>(empty($email)?'Email is required':"") ]);
+    array_push($errorArray, ['name' => "amount","msg"=>(empty($amount)?'Amount is required':"") ]);
+    array_push($errorArray, ['name' => "currency","msg"=>(empty($currency)?'Currency is required':"") ]);
+    array_push($errorArray, ['name' => "phoneNo","msg"=>(empty($phoneNo)?'Number is required':"") ]);
+    array_push($errorArray, ['name' => "paymentCond","msg"=>(empty($paymentCond)?' Select between lIVE/ TEST':"") ]);
 
     //redirect url 
   //the redirected url.... success page..
 
     $redirect_url = (isset($_SERVER['HTTPS']) ? 'https' : 'http')
     . '://'.$_SERVER['HTTP_HOST'].'payment.php';
-    
+
+
+
    //no error...
-    if (count($errorArray) === 0) {
+   function filterError($errField){
+    return ($errField['msg'] != "" );
+}
+
+    if (count(array_filter($errorArray,'filterError')) == 0) {
         $request = [
             'tx_ref' => time(),
             'amount' => $amount,
@@ -60,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'time' => 'time is not a problem...'
             ]
             ];
-            //this curl is like axios 
+          //initialize client url..
         $curl = curl_init();
     //
         curl_setopt_array($curl, array(
@@ -89,16 +98,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
             print_r($res);
     
-            /*
-            if ($res['status'] == 'success') {
-                //proceed
-                $checkoutPage = $res['data']['link'];
+            
+            if ($res->status == 'success') {
+                $checkoutPage = $res->data->link;
+                //we will embed this in our check out page.. but for now...
                 header('location:'.$checkoutPage);
             }else {
+                echo 'Error using this gateway';
                 //call another gateway endpoint.... //paystack
             }
-            */
+            
     }else{
+        //error in json..
         echo json_encode($errorArray);
     }
 
@@ -107,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 /**
- * 
+ * dummy postman test data
  * {
     "name":"MARVELLOS",
     "currency":"NGN",
